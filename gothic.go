@@ -32,7 +32,7 @@ type key int
 func init() {
 	// optional config
 	config := session.Config{
-		Key: gothic.SessionName,
+		Lookup: "cookie:" + gothic.SessionName,
 	}
 
 	Session = session.New(config)
@@ -216,7 +216,7 @@ func validateState(ctx *fiber.Ctx, sess goth.Session) error {
 
 // Logout invalidates a user session.
 func Logout(ctx *fiber.Ctx) error {
-	store := Session.Start(ctx)
+	store := Session.Get(ctx)
 
 	store.Destroy()
 
@@ -251,7 +251,7 @@ func GetProviderName(ctx *fiber.Ctx) (string, error) {
 
 	// As a fallback, loop over the used providers, if we already have a valid session for any provider (ie. user has already begun authentication with a provider), then return that provider name
 	providers := goth.GetProviders()
-	store := Session.Start(ctx)
+	store := Session.Get(ctx)
 
 	for _, provider := range providers {
 		p := provider.Name()
@@ -273,13 +273,13 @@ func GetContextWithProvider(ctx *fiber.Ctx, provider string) *fiber.Ctx {
 
 // StoreInSession stores a specified key/value pair in the session.
 func StoreInSession(key string, value string, ctx *fiber.Ctx) error {
-	store := Session.Start(ctx)
+	store := Session.Get(ctx)
 
 	if err := updateSessionValue(store, key, value); err != nil {
 		return err
 	}
 
-	store.Save(ctx, store)
+	store.Save()
 
 	return nil
 }
@@ -287,7 +287,7 @@ func StoreInSession(key string, value string, ctx *fiber.Ctx) error {
 // GetFromSession retrieves a previously-stored value from the session.
 // If no value has previously been stored at the specified key, it will return an error.
 func GetFromSession(key string, ctx *fiber.Ctx) (string, error) {
-	store := Session.Start(ctx)
+	store := Session.Get(ctx)
 
 	value, err := getSessionValue(store, key)
 	if err != nil {
