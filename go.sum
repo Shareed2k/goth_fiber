@@ -11,6 +11,8 @@ github.com/go-redis/redis/v7 v7.2.0/go.mod h1:JDNMw23GTyLNC4GZu9njt15ctBQVn7xjRf
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/gofiber/fiber v1.9.3 h1:KOuTZABkLAOQkPfrXhnIaPi7QsMkFClBKK6bLL2f4ZM=
 github.com/gofiber/fiber v1.9.3/go.mod h1:o2YQgwJW8+Z16x8MTos4nYn8PD1RJpzu9fojiGqjSjI=
+github.com/gofiber/fiber v1.9.4 h1:7lzIhs0kxPOypUSuRB1b8Y4Vn7HZOa7YdHf+vCaJnF0=
+github.com/gofiber/fiber v1.9.4/go.mod h1:o2YQgwJW8+Z16x8MTos4nYn8PD1RJpzu9fojiGqjSjI=
 github.com/gofiber/session v1.0.0 h1:DxzWF08gBI5exlCzBe+5BmiT7VlA1ONMVoUfwrTNZ/I=
 github.com/gofiber/session v1.0.0/go.mod h1:d5rCV84pMB/GpebKSe3uf8Jt4idPcAV618V4s7aguhM=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
