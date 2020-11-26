@@ -12,8 +12,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/gofiber/fiber"
-	"github.com/gofiber/session"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 )
@@ -23,7 +23,7 @@ const ProviderParamKey key = iota
 
 // Session can/should be set by applications using gothic. The default is a cookie store.
 var (
-	Session       *session.Session
+	SessionStore  *session.Store
 	ErrSessionNil = errors.New("goth/gothic: no SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store.")
 )
 
@@ -32,10 +32,10 @@ type key int
 func init() {
 	// optional config
 	config := session.Config{
-		Lookup: "cookie:" + gothic.SessionName,
+		CookieName: "cookie:" + gothic.SessionName,
 	}
 
-	Session = session.New(config)
+	SessionStore = session.New(config)
 }
 
 /*
@@ -48,15 +48,14 @@ for the requested provider.
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-func BeginAuthHandler(ctx *fiber.Ctx) {
+func BeginAuthHandler(ctx *fiber.Ctx) error {
 	url, err := GetAuthURL(ctx)
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
-		ctx.Send(err)
-		return
+		return err
 	}
 
-	ctx.Redirect(url, http.StatusTemporaryRedirect)
+	return ctx.Redirect(url, http.StatusTemporaryRedirect)
 }
 
 // SetState sets the state string associated with the given request.
@@ -100,7 +99,7 @@ I would recommend using the BeginAuthHandler instead of doing all of these steps
 yourself, but that's entirely up to you.
 */
 func GetAuthURL(ctx *fiber.Ctx) (string, error) {
-	if Session == nil {
+	if SessionStore == nil {
 		return "", ErrSessionNil
 	}
 
@@ -113,6 +112,7 @@ func GetAuthURL(ctx *fiber.Ctx) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	sess, err := provider.BeginAuth(SetState(ctx))
 	if err != nil {
 		return "", err
@@ -124,7 +124,6 @@ func GetAuthURL(ctx *fiber.Ctx) (string, error) {
 	}
 
 	err = StoreInSession(providerName, sess.Marshal(), ctx)
-
 	if err != nil {
 		return "", err
 	}
@@ -143,7 +142,7 @@ See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
 func CompleteUserAuth(ctx *fiber.Ctx) (goth.User, error) {
 	defer Logout(ctx)
-	if Session == nil {
+	if SessionStore == nil {
 		return goth.User{}, ErrSessionNil
 	}
 
@@ -216,9 +215,14 @@ func validateState(ctx *fiber.Ctx, sess goth.Session) error {
 
 // Logout invalidates a user session.
 func Logout(ctx *fiber.Ctx) error {
-	store := Session.Get(ctx)
+	session, err := SessionStore.Get(ctx)
+	if err != nil {
+		return err
+	}
 
-	store.Destroy()
+	if err := session.Destroy(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -240,22 +244,26 @@ func GetProviderName(ctx *fiber.Ctx) (string, error) {
 	}
 
 	//  try to get it from the Fasthttp context's value of "provider" key
-	if p, ok := ctx.Fasthttp.UserValue("provider").(string); ok {
+	if p := ctx.Get("provider", ""); p != "" {
 		return p, nil
 	}
 
 	// try to get it from the Fasthttp context's value of providerContextKey key
-	if p, ok := ctx.Fasthttp.UserValue(string(ProviderParamKey)).(string); ok {
+	if p := ctx.Get(string(ProviderParamKey), ""); p != "" {
 		return p, nil
 	}
 
 	// As a fallback, loop over the used providers, if we already have a valid session for any provider (ie. user has already begun authentication with a provider), then return that provider name
 	providers := goth.GetProviders()
-	store := Session.Get(ctx)
+	session, err := SessionStore.Get(ctx)
+	if err != nil {
+		return "", err
+		// or panic?
+	}
 
 	for _, provider := range providers {
 		p := provider.Name()
-		value := store.Get(p)
+		value := session.Get(p)
 		if _, ok := value.(string); ok {
 			return p, nil
 		}
@@ -267,29 +275,35 @@ func GetProviderName(ctx *fiber.Ctx) (string, error) {
 
 // GetContextWithProvider returns a new request context containing the provider
 func GetContextWithProvider(ctx *fiber.Ctx, provider string) *fiber.Ctx {
-	ctx.Fasthttp.SetUserValue(string(ProviderParamKey), provider)
+	ctx.Set(string(ProviderParamKey), provider)
 	return ctx
 }
 
 // StoreInSession stores a specified key/value pair in the session.
 func StoreInSession(key string, value string, ctx *fiber.Ctx) error {
-	store := Session.Get(ctx)
-
-	if err := updateSessionValue(store, key, value); err != nil {
+	session, err := SessionStore.Get(ctx)
+	if err != nil {
 		return err
 	}
 
-	store.Save()
+	if err := updateSessionValue(session, key, value); err != nil {
+		return err
+	}
 
+	// saved here
+	session.Save()
 	return nil
 }
 
 // GetFromSession retrieves a previously-stored value from the session.
 // If no value has previously been stored at the specified key, it will return an error.
 func GetFromSession(key string, ctx *fiber.Ctx) (string, error) {
-	store := Session.Get(ctx)
+	session, err := SessionStore.Get(ctx)
+	if err != nil {
+		return "", err
+	}
 
-	value, err := getSessionValue(store, key)
+	value, err := getSessionValue(session, key)
 	if err != nil {
 		return "", errors.New("could not find a matching session for this request")
 	}
@@ -297,7 +311,7 @@ func GetFromSession(key string, ctx *fiber.Ctx) (string, error) {
 	return value, nil
 }
 
-func getSessionValue(store *session.Store, key string) (string, error) {
+func getSessionValue(store *session.Session, key string) (string, error) {
 	value := store.Get(key)
 	if value == nil {
 		return "", errors.New("could not find a matching session for this request")
@@ -316,7 +330,7 @@ func getSessionValue(store *session.Store, key string) (string, error) {
 	return string(s), nil
 }
 
-func updateSessionValue(store *session.Store, key, value string) error {
+func updateSessionValue(session *session.Session, key, value string) error {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	if _, err := gz.Write([]byte(value)); err != nil {
@@ -329,6 +343,7 @@ func updateSessionValue(store *session.Store, key, value string) error {
 		return err
 	}
 
-	store.Set(key, b.String())
+	session.Set(key, b.String())
+
 	return nil
 }

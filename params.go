@@ -1,6 +1,6 @@
 package goth_fiber
 
-import "github.com/gofiber/fiber"
+import "github.com/gofiber/fiber/v2"
 
 type Params struct {
 	ctx *fiber.Ctx
