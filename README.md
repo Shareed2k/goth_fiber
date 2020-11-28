@@ -14,62 +14,62 @@ $ go get github.com/shareed2k/goth_fiber
 
 ## Supported Providers
 
-* Amazon
-* Apple
-* Auth0
-* Azure AD
-* Battle.net
-* Bitbucket
-* Box
-* Cloud Foundry
-* Dailymotion
-* Deezer
-* Digital Ocean
-* Discord
-* Dropbox
-* Eve Online
-* Facebook
-* Fitbit
-* Gitea
-* GitHub
-* Gitlab
-* Google
-* Google+ (deprecated)
-* Heroku
-* InfluxCloud
-* Instagram
-* Intercom
-* Kakao
-* Lastfm
-* Linkedin
-* LINE
-* Mailru
-* Meetup
-* MicrosoftOnline
-* Naver
-* Nextcloud
-* OneDrive
-* OpenID Connect (auto discovery)
-* Paypal
-* SalesForce
-* Shopify
-* Slack
-* Soundcloud
-* Spotify
-* Steam
-* Strava
-* Stripe
-* Tumblr
-* Twitch
-* Twitter
-* Typetalk
-* Uber
-* VK
-* Wepay
-* Xero
-* Yahoo
-* Yammer
-* Yandex
+- Amazon
+- Apple
+- Auth0
+- Azure AD
+- Battle.net
+- Bitbucket
+- Box
+- Cloud Foundry
+- Dailymotion
+- Deezer
+- Digital Ocean
+- Discord
+- Dropbox
+- Eve Online
+- Facebook
+- Fitbit
+- Gitea
+- GitHub
+- Gitlab
+- Google
+- Google+ (deprecated)
+- Heroku
+- InfluxCloud
+- Instagram
+- Intercom
+- Kakao
+- Lastfm
+- Linkedin
+- LINE
+- Mailru
+- Meetup
+- MicrosoftOnline
+- Naver
+- Nextcloud
+- OneDrive
+- OpenID Connect (auto discovery)
+- Paypal
+- SalesForce
+- Shopify
+- Slack
+- Soundcloud
+- Spotify
+- Steam
+- Strava
+- Stripe
+- Tumblr
+- Twitch
+- Twitter
+- Typetalk
+- Uber
+- VK
+- Wepay
+- Xero
+- Yahoo
+- Yammer
+- Yandex
 
 ## Examples
 
@@ -81,10 +81,19 @@ To run the example either clone the source from GitHub
 ```text
 $ git clone git@github.com/shareed2k/goth_fiber.git
 ```
-or use
+
+or use for v2
+
 ```text
+$ go get github.com/shareed2k/goth_fiber/v2
+```
+
+For v1
+
+```
 $ go get github.com/shareed2k/goth_fiber
 ```
+
 ```text
 $ cd goth_fiber/examples
 $ go get -v
