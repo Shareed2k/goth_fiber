@@ -7,7 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
-	"github.com/shareed2k/goth_fiber/v2"
+
+	"github.com/shareed2k/goth_fiber"
 )
 
 func main() {

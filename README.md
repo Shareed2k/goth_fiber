@@ -82,15 +82,7 @@ To run the example either clone the source from GitHub
 $ git clone git@github.com/shareed2k/goth_fiber.git
 ```
 
-or use for v2
-
 ```text
-$ go get github.com/shareed2k/goth_fiber/v2
-```
-
-For v1
-
-```
 $ go get github.com/shareed2k/goth_fiber
 ```
 

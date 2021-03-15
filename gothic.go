@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -32,7 +33,8 @@ type key int
 func init() {
 	// optional config
 	config := session.Config{
-		CookieName: "cookie:" + gothic.SessionName,
+		CookieName:     gothic.SessionName,
+		CookieHTTPOnly: true,
 	}
 
 	SessionStore = session.New(config)
@@ -141,7 +143,6 @@ as either "provider" or ":provider".
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
 func CompleteUserAuth(ctx *fiber.Ctx) (goth.User, error) {
-	defer Logout(ctx)
 	if SessionStore == nil {
 		return goth.User{}, ErrSessionNil
 	}
@@ -160,6 +161,8 @@ func CompleteUserAuth(ctx *fiber.Ctx) (goth.User, error) {
 	if err != nil {
 		return goth.User{}, err
 	}
+
+	defer Logout(ctx)
 
 	sess, err := provider.UnmarshalSession(value)
 	if err != nil {
@@ -249,7 +252,7 @@ func GetProviderName(ctx *fiber.Ctx) (string, error) {
 	}
 
 	// try to get it from the Fasthttp context's value of providerContextKey key
-	if p := ctx.Get(string(ProviderParamKey), ""); p != "" {
+	if p := ctx.Get(fmt.Sprint(ProviderParamKey), ""); p != "" {
 		return p, nil
 	}
 
@@ -275,7 +278,7 @@ func GetProviderName(ctx *fiber.Ctx) (string, error) {
 
 // GetContextWithProvider returns a new request context containing the provider
 func GetContextWithProvider(ctx *fiber.Ctx, provider string) *fiber.Ctx {
-	ctx.Set(string(ProviderParamKey), provider)
+	ctx.Set(fmt.Sprint(ProviderParamKey), provider)
 	return ctx
 }
 
