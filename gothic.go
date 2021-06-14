@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -53,11 +52,10 @@ See https://github.com/markbates/goth/examples/main.go to see this in action.
 func BeginAuthHandler(ctx *fiber.Ctx) error {
 	url, err := GetAuthURL(ctx)
 	if err != nil {
-		ctx.Status(http.StatusBadRequest)
-		return err
+		return ctx.SendStatus(fiber.StatusTemporaryRedirect)
 	}
 
-	return ctx.Redirect(url, http.StatusTemporaryRedirect)
+	return ctx.Redirect(url, fiber.StatusTemporaryRedirect)
 }
 
 // SetState sets the state string associated with the given request.
