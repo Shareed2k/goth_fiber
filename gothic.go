@@ -32,7 +32,7 @@ type key int
 func init() {
 	// optional config
 	config := session.Config{
-		CookieName:     gothic.SessionName,
+		KeyLookup: fmt.Sprintf("cookie:%s", gothic.SessionName),
 		CookieHTTPOnly: true,
 	}
 
