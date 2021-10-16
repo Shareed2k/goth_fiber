@@ -99,38 +99,46 @@ To actually use the different providers, please make sure you set environment va
 
 ## Security Notes
 
-By default, goth uses a `Session` from the `gofiber/session` package to store session data.
+By default, goth_fiber uses a `Session` from the `gofiber/session` package to store session data.
 
-As configured, this default store (`session.Session`) will generate cookies with `session.Config`:
+As configured, goth will generate cookies with the following `session.Config`:
 
 ```go
     session.Config{
-        Key:    "dinosaurus",       // default: "sessionid"
-        Lookup: "header",           // default: "cookie"
-        Domain: "google.com",       // default: ""
-        Expires: 30 * time.Minutes, // default: 2 * time.Hour
-        Secure:  true,              // default: false
-    }
+	    Expiration: 24 * time.Hour,
+	    Storage:    memory.New(),
+	    KeyLookup: "cookie:_gothic_session",
+	    CookieDomain: "",
+	    CookiePath: "",
+	    CookieSecure: false,
+	    CookieHTTPOnly: true,
+	    CookieSameSite: "Lax",
+	    KeyGenerator: utils.UUIDv4,
+	}
 ```
 
-To tailor these fields for your application, you can override the `goth_fiber.Session` variable at startup.
+To tailor these fields for your application, you can override the `goth_fiber.SessionStore` variable at startup.
 
 The following snippet shows one way to do this:
 
 ```go
     // optional config
     config := session.Config{
-        Key:    "dinosaurus",       // default: "sessionid"
-        Lookup: "header",           // default: "cookie"
-        Domain: "google.com",       // default: ""
-        Expires: 30 * time.Minutes, // default: 2 * time.Hour
-        Secure:  true,              // default: false
-     }
+	    Expiration:     30 * time.Minutes,
+	    Storage:        sqlite3.New(), // From github.com/gofiber/storage/sqlite3
+	    KeyLookup:      "header:session_id",
+	    CookieDomain:   "google.com",
+	    CookiePath:     "/users",
+	    CookieSecure:   os.Getenv("ENVIRONMENT") == "production",
+	    CookieHTTPOnly: true, // Should always be enabled
+	    CookieSameSite: "Lax",
+	    KeyGenerator:   utils.UUIDv4,
+	}
 
     // create session handler
     sessions := session.New(config)
 
-    goth_fiber.Session = sessions
+    goth_fiber.SessionStore = sessions
 ```
 
 ## Issues

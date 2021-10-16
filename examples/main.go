@@ -14,9 +14,17 @@ import (
 func main() {
 	app := fiber.New()
 
+	// Optionally, you can override the session store here:
+	// goth_fiber.SessionStore = session.New(session.Config{
+	// 	CookieName:     "some",
+	// 	CookieHTTPOnly: true,
+	// 	Storage: 				sqlite3.New(),
+	// })
+
 	goth.UseProviders(
 		google.New(os.Getenv("OAUTH_KEY"), os.Getenv("OAUTH_SECRET"), "http://127.0.0.1:8088/auth/callback"),
 	)
+
 	app.Get("/login", goth_fiber.BeginAuthHandler)
 	app.Get("/auth/callback", func(ctx *fiber.Ctx) error {
 		user, err := goth_fiber.CompleteUserAuth(ctx)
@@ -25,7 +33,6 @@ func main() {
 		}
 
 		return ctx.SendString(user.Email)
-
 	})
 	app.Get("/logout", func(ctx *fiber.Ctx) error {
 		if err := goth_fiber.Logout(ctx); err != nil {
