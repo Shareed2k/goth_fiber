@@ -52,7 +52,7 @@ See https://github.com/markbates/goth/examples/main.go to see this in action.
 func BeginAuthHandler(ctx *fiber.Ctx) error {
 	url, err := GetAuthURL(ctx)
 	if err != nil {
-		return ctx.SendStatus(fiber.StatusTemporaryRedirect)
+		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
 	return ctx.Redirect(url, fiber.StatusTemporaryRedirect)
