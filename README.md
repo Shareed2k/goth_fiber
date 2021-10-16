@@ -93,7 +93,7 @@ $ go build
 $ ./examples
 ```
 
-Now open up your browser and go to [http://localhost:8088](http://localhost:8088) to see the example.
+Now open up your browser and go to [http://localhost:8088/login/google](http://localhost:8088/login/google) to see the example.
 
 To actually use the different providers, please make sure you set environment variables. Example given in the examples/main.go file
 
