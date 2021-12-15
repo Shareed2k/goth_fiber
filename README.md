@@ -1,4 +1,4 @@
-# Goth-Fiber: Multi-Provider Authentication for Go [![GoDoc](https://godoc.org/github.com/shareed2k/goth_fiber?status.svg)](https://godoc.org/github.com/markbates/goth)
+# Goth-Fiber: Multi-Provider Authentication for Go [![GoDoc](https://godoc.org/github.com/shareed2k/goth_fiber?status.svg)](https://godoc.org/github.com/shareed2k/goth_fiber)
 
 Is wrapper for [goth library](https://github.com/markbates/goth) to use with [fiber Framework](https://github.com/gofiber/fiber), provides a simple, clean, and idiomatic way to write authentication
 packages for Go web applications.
