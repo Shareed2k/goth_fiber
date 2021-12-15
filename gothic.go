@@ -32,7 +32,7 @@ type key int
 func init() {
 	// optional config
 	config := session.Config{
-		CookieName:     gothic.SessionName,
+		KeyLookup: fmt.Sprintf("cookie:%s", gothic.SessionName),
 		CookieHTTPOnly: true,
 	}
 
@@ -52,7 +52,7 @@ See https://github.com/markbates/goth/examples/main.go to see this in action.
 func BeginAuthHandler(ctx *fiber.Ctx) error {
 	url, err := GetAuthURL(ctx)
 	if err != nil {
-		return ctx.SendStatus(fiber.StatusTemporaryRedirect)
+		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
 	return ctx.Redirect(url, fiber.StatusTemporaryRedirect)
