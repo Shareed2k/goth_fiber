@@ -8,7 +8,7 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
 
-	"github.com/skeswa/goth_fiber"
+	"github.com/shareed2k/goth_fiber"
 )
 
 func main() {
