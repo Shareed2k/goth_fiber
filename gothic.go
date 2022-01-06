@@ -146,7 +146,9 @@ process and fetches all of the basic information about the user from the provide
 It expects to be able to get the name of the provider from the query parameters
 as either "provider" or ":provider".
 
-NOTE: only the first options parameter is used by this function.
+This method automatically ends the session. You can prevent this behavior by
+passing in options. Please note that any options provided in addition to the
+first will be ignored.
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
@@ -171,7 +173,7 @@ func CompleteUserAuth(ctx *fiber.Ctx, options ...CompleteUserAuthOptions) (goth.
 	}
 
 	shouldLogout := true
-	if len(options) == 1 && !options[0].ShouldLogout {
+	if len(options) > 0 && !options[0].ShouldLogout {
 		shouldLogout = false
 	}
 
