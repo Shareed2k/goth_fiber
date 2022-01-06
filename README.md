@@ -1,4 +1,4 @@
-# Goth-Fiber: Multi-Provider Authentication for Go [![GoDoc](https://godoc.org/github.com/shareed2k/goth_fiber?status.svg)](https://godoc.org/github.com/shareed2k/goth_fiber)
+# Goth-Fiber: Multi-Provider Authentication for Go [![GoDoc](https://godoc.org/github.com/skeswa/goth_fiber?status.svg)](https://godoc.org/github.com/skeswa/goth_fiber)
 
 Is wrapper for [goth library](https://github.com/markbates/goth) to use with [fiber Framework](https://github.com/gofiber/fiber), provides a simple, clean, and idiomatic way to write authentication
 packages for Go web applications.
@@ -9,7 +9,7 @@ protocol providers, as long as they implement the `Provider` and `Session` inter
 ## Installation
 
 ```text
-$ go get github.com/shareed2k/goth_fiber
+$ go get github.com/skeswa/goth_fiber
 ```
 
 ## Supported Providers
@@ -79,11 +79,11 @@ through Twitter, Facebook, Google Plus etc.
 To run the example either clone the source from GitHub
 
 ```text
-$ git clone git@github.com/shareed2k/goth_fiber.git
+$ git clone git@github.com/skeswa/goth_fiber.git
 ```
 
 ```text
-$ go get github.com/shareed2k/goth_fiber
+$ go get github.com/skeswa/goth_fiber
 ```
 
 ```text
