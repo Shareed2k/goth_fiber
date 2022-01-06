@@ -32,7 +32,7 @@ type key int
 func init() {
 	// optional config
 	config := session.Config{
-		KeyLookup: fmt.Sprintf("cookie:%s", gothic.SessionName),
+		KeyLookup:      fmt.Sprintf("cookie:%s", gothic.SessionName),
 		CookieHTTPOnly: true,
 	}
 
@@ -131,6 +131,14 @@ func GetAuthURL(ctx *fiber.Ctx) (string, error) {
 	return url, err
 }
 
+// Options that affect how CompleteUserAuth works.
+type CompleteUserAuthOptions struct {
+	// True if CompleteUserAuth should automatically end the user's session.
+	//
+	// Defaults to True.
+	ShouldLogout bool
+}
+
 /*
 CompleteUserAuth does what it says on the tin. It completes the authentication
 process and fetches all of the basic information about the user from the provider.
@@ -138,9 +146,11 @@ process and fetches all of the basic information about the user from the provide
 It expects to be able to get the name of the provider from the query parameters
 as either "provider" or ":provider".
 
+NOTE: only the first options parameter is used by this function.
+
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-func CompleteUserAuth(ctx *fiber.Ctx) (goth.User, error) {
+func CompleteUserAuth(ctx *fiber.Ctx, options ...CompleteUserAuthOptions) (goth.User, error) {
 	if SessionStore == nil {
 		return goth.User{}, ErrSessionNil
 	}
@@ -160,7 +170,14 @@ func CompleteUserAuth(ctx *fiber.Ctx) (goth.User, error) {
 		return goth.User{}, err
 	}
 
-	defer Logout(ctx)
+	shouldLogout := true
+	if len(options) == 1 && !options[0].ShouldLogout {
+		shouldLogout = false
+	}
+
+	if shouldLogout {
+		defer Logout(ctx)
+	}
 
 	sess, err := provider.UnmarshalSession(value)
 	if err != nil {
