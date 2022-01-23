@@ -3,7 +3,7 @@ module github.com/shareed2k/goth_fiber
 go 1.17
 
 require (
-	github.com/gofiber/fiber/v2 v2.24.0
+	github.com/gofiber/fiber/v2 v2.25.0
 	github.com/markbates/goth v1.69.0
 )
 
@@ -18,7 +18,7 @@ require (
 	github.com/klauspost/compress v1.13.4 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.31.0 // indirect
+	github.com/valyala/fasthttp v1.32.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914 // indirect
