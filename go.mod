@@ -3,7 +3,7 @@ module github.com/shareed2k/goth_fiber
 go 1.17
 
 require (
-	github.com/gofiber/fiber/v2 v2.29.0
+	github.com/gofiber/fiber/v2 v2.30.0
 	github.com/markbates/goth v1.69.0
 )
 
