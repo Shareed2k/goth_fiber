@@ -140,8 +140,8 @@ github.com/lestrrat-go/iter v1.0.1/go.mod h1:zIdgO1mRKhn8l9vrZJZz9TUMMFbQbLeTsbq
 github.com/lestrrat-go/jwx v1.2.21/go.mod h1:9cfxnOH7G1gN75CaJP2hKGcxFEx5sPh1abRIA/ZJVh4=
 github.com/lestrrat-go/option v1.0.0/go.mod h1:5ZHFbivi4xwXxhxY9XHDe2FHo6/Z7WWmtT7T5nBBp3I=
 github.com/markbates/going v1.0.0/go.mod h1:I6mnB4BPnEeqo85ynXIx1ZFLLbtiLHNXVgWeFO9OGOA=
-github.com/markbates/goth v1.71.0 h1:d/KYEavYX6Ohwuxu8jPq+t2NnbWFoU5tIpsHNxzWuEg=
-github.com/markbates/goth v1.71.0/go.mod h1:X6xdNgpapSENS0O35iTBBcMHoJDQDfI9bJl+APCkYMc=
+github.com/markbates/goth v1.71.1 h1:MYXrNZwtMsCqVouRv1nhz8APZaMGOsymTHupVvzJBUM=
+github.com/markbates/goth v1.71.1/go.mod h1:X6xdNgpapSENS0O35iTBBcMHoJDQDfI9bJl+APCkYMc=
 github.com/mrjones/oauth v0.0.0-20180629183705-f4e24b6d100c/go.mod h1:skjdDftzkFALcuGzYSklqYd8gvat6F1gZJ4YPVbkZpM=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
