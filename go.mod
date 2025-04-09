@@ -4,12 +4,13 @@ go 1.17
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/markbates/goth v1.80.0
+	github.com/markbates/goth v1.81.0
 )
 
 require (
 	cloud.google.com/go v0.67.0 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/go-chi/chi/v5 v5.1.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
