@@ -10,7 +10,7 @@ require (
 require (
 	cloud.google.com/go v0.67.0 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
-	github.com/go-chi/chi/v5 v5.1.0 // indirect
+	github.com/go-chi/chi/v5 v5.2.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
