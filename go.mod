@@ -1,6 +1,6 @@
 module github.com/shareed2k/goth_fiber
 
-go 1.17
+go 1.23.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.9
@@ -11,7 +11,6 @@ require (
 	cloud.google.com/go v0.67.0 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/go-chi/chi/v5 v5.2.2 // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
@@ -25,8 +24,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	golang.org/x/oauth2 v0.17.0 // indirect
+	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
-	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
 )
