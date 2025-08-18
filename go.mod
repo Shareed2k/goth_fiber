@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.9
-	github.com/markbates/goth v1.81.0
+	github.com/markbates/goth v1.82.0
 )
 
 require (
