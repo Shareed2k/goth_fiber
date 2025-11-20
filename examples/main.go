@@ -4,21 +4,21 @@ import (
 	"log"
 	"os"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
 
-	"github.com/shareed2k/goth_fiber"
+	"github.com/wakatara/goth_fiber"
 )
 
 func main() {
 	app := fiber.New()
 
 	// Optionally, you can override the session store here:
-	// goth_fiber.SessionStore = session.New(session.Config{
-	// 	KeyLookup:			"cookie:dinosaurus",
-	// 	CookieHTTPOnly:	true,
-	// 	Storage:				sqlite3.New(),
+	// goth_fiber.SessionStore = session.NewStore(session.Config{
+	// 	CookieName:     "dinosaurus",
+	// 	CookieHTTPOnly: true,
+	// 	Storage:        sqlite3.New(),
 	// })
 
 	goth.UseProviders(
@@ -26,7 +26,7 @@ func main() {
 	)
 
 	app.Get("/login/:provider", goth_fiber.BeginAuthHandler)
-	app.Get("/auth/callback/:provider", func(ctx *fiber.Ctx) error {
+	app.Get("/auth/callback/:provider", func(ctx fiber.Ctx) error {
 		user, err := goth_fiber.CompleteUserAuth(ctx)
 		if err != nil {
 			log.Fatal(err)
@@ -34,7 +34,7 @@ func main() {
 
 		return ctx.SendString(user.Email)
 	})
-	app.Get("/logout", func(ctx *fiber.Ctx) error {
+	app.Get("/logout", func(ctx fiber.Ctx) error {
 		if err := goth_fiber.Logout(ctx); err != nil {
 			log.Fatal(err)
 		}

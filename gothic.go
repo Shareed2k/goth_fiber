@@ -6,14 +6,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"strings"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/extractors"
+	"github.com/gofiber/fiber/v3/middleware/session"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 )
@@ -30,13 +29,11 @@ var (
 type key int
 
 func init() {
-	// optional config
-	config := session.Config{
-		KeyLookup:      fmt.Sprintf("cookie:%s", gothic.SessionName),
+	// Create a new session store with cookie-based session ID
+	SessionStore = session.NewStore(session.Config{
+		Extractor:      extractors.FromCookie(gothic.SessionName),
 		CookieHTTPOnly: true,
-	}
-
-	SessionStore = session.New(config)
+	})
 }
 
 /*
@@ -49,20 +46,20 @@ for the requested provider.
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-func BeginAuthHandler(ctx *fiber.Ctx) error {
+func BeginAuthHandler(ctx fiber.Ctx) error {
 	url, err := GetAuthURL(ctx)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	return ctx.Redirect(url, fiber.StatusTemporaryRedirect)
+	return ctx.Redirect().Status(fiber.StatusTemporaryRedirect).To(url)
 }
 
 // SetState sets the state string associated with the given request.
 // If no state string is associated with the request, one will be generated.
 // This state is sent to the provider and can be retrieved during the
 // callback.
-func SetState(ctx *fiber.Ctx) string {
+func SetState(ctx fiber.Ctx) string {
 	state := ctx.Query("state")
 	if len(state) > 0 {
 		return state
@@ -84,7 +81,7 @@ func SetState(ctx *fiber.Ctx) string {
 // GetState gets the state returned by the provider during the callback.
 // This is used to prevent CSRF attacks, see
 // http://tools.ietf.org/html/rfc6749#section-10.12
-func GetState(ctx *fiber.Ctx) string {
+func GetState(ctx fiber.Ctx) string {
 	return ctx.Query("state")
 }
 
@@ -98,7 +95,7 @@ as either "provider" or ":provider".
 I would recommend using the BeginAuthHandler instead of doing all of these steps
 yourself, but that's entirely up to you.
 */
-func GetAuthURL(ctx *fiber.Ctx) (string, error) {
+func GetAuthURL(ctx fiber.Ctx) (string, error) {
 	if SessionStore == nil {
 		return "", ErrSessionNil
 	}
@@ -152,7 +149,7 @@ first will be ignored.
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-func CompleteUserAuth(ctx *fiber.Ctx, options ...CompleteUserAuthOptions) (goth.User, error) {
+func CompleteUserAuth(ctx fiber.Ctx, options ...CompleteUserAuthOptions) (goth.User, error) {
 	if SessionStore == nil {
 		return goth.User{}, ErrSessionNil
 	}
@@ -204,7 +201,6 @@ func CompleteUserAuth(ctx *fiber.Ctx, options ...CompleteUserAuthOptions) (goth.
 	}
 
 	err = StoreInSession(providerName, sess.Marshal(), ctx)
-
 	if err != nil {
 		return goth.User{}, err
 	}
@@ -215,7 +211,7 @@ func CompleteUserAuth(ctx *fiber.Ctx, options ...CompleteUserAuthOptions) (goth.
 
 // validateState ensures that the state token param from the original
 // AuthURL matches the one included in the current (callback) request.
-func validateState(ctx *fiber.Ctx, sess goth.Session) error {
+func validateState(ctx fiber.Ctx, sess goth.Session) error {
 	rawAuthURL, err := sess.GetAuthURL()
 	if err != nil {
 		return err
@@ -234,17 +230,18 @@ func validateState(ctx *fiber.Ctx, sess goth.Session) error {
 }
 
 // Logout invalidates a user session.
-func Logout(ctx *fiber.Ctx) error {
-	session, err := SessionStore.Get(ctx)
+func Logout(ctx fiber.Ctx) error {
+	sess, err := SessionStore.Get(ctx)
 	if err != nil {
 		return err
 	}
+	defer sess.Release()
 
-	if err := session.Destroy(); err != nil {
+	if err := sess.Destroy(); err != nil {
 		return err
 	}
 
-	return nil
+	return sess.Save()
 }
 
 // GetProviderName is a function used to get the name of a provider
@@ -252,7 +249,7 @@ func Logout(ctx *fiber.Ctx) error {
 // the URL query string. If you provide it in a different way,
 // assign your own function to this variable that returns the provider
 // name for your request.
-func GetProviderName(ctx *fiber.Ctx) (string, error) {
+func GetProviderName(ctx fiber.Ctx) (string, error) {
 	// try to get it from the url param "provider"
 	if p := ctx.Query("provider"); p != "" {
 		return p, nil
@@ -268,22 +265,22 @@ func GetProviderName(ctx *fiber.Ctx) (string, error) {
 		return p, nil
 	}
 
-	// try to get it from the Fasthttp context's value of providerContextKey key
-	if p := ctx.Get(fmt.Sprint(ProviderParamKey), ""); p != "" {
+	// try to get it from the Fiber context's Locals
+	if p, ok := ctx.Locals(ProviderParamKey).(string); ok && p != "" {
 		return p, nil
 	}
 
 	// As a fallback, loop over the used providers, if we already have a valid session for any provider (ie. user has already begun authentication with a provider), then return that provider name
 	providers := goth.GetProviders()
-	session, err := SessionStore.Get(ctx)
+	sess, err := SessionStore.Get(ctx)
 	if err != nil {
 		return "", err
-		// or panic?
 	}
+	defer sess.Release()
 
 	for _, provider := range providers {
 		p := provider.Name()
-		value := session.Get(p)
+		value := sess.Get(p)
 		if _, ok := value.(string); ok {
 			return p, nil
 		}
@@ -294,36 +291,36 @@ func GetProviderName(ctx *fiber.Ctx) (string, error) {
 }
 
 // GetContextWithProvider returns a new request context containing the provider
-func GetContextWithProvider(ctx *fiber.Ctx, provider string) *fiber.Ctx {
-	ctx.Set(fmt.Sprint(ProviderParamKey), provider)
+func GetContextWithProvider(ctx fiber.Ctx, provider string) fiber.Ctx {
+	ctx.Locals(ProviderParamKey, provider)
 	return ctx
 }
 
 // StoreInSession stores a specified key/value pair in the session.
-func StoreInSession(key string, value string, ctx *fiber.Ctx) error {
-	session, err := SessionStore.Get(ctx)
+func StoreInSession(key string, value string, ctx fiber.Ctx) error {
+	sess, err := SessionStore.Get(ctx)
 	if err != nil {
 		return err
 	}
+	defer sess.Release()
 
-	if err := updateSessionValue(session, key, value); err != nil {
+	if err := updateSessionValue(sess, key, value); err != nil {
 		return err
 	}
 
-	// saved here
-	session.Save()
-	return nil
+	return sess.Save()
 }
 
 // GetFromSession retrieves a previously-stored value from the session.
 // If no value has previously been stored at the specified key, it will return an error.
-func GetFromSession(key string, ctx *fiber.Ctx) (string, error) {
-	session, err := SessionStore.Get(ctx)
+func GetFromSession(key string, ctx fiber.Ctx) (string, error) {
+	sess, err := SessionStore.Get(ctx)
 	if err != nil {
 		return "", err
 	}
+	defer sess.Release()
 
-	value, err := getSessionValue(session, key)
+	value, err := getSessionValue(sess, key)
 	if err != nil {
 		return "", errors.New("could not find a matching session for this request")
 	}
@@ -342,7 +339,7 @@ func getSessionValue(store *session.Session, key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	s, err := ioutil.ReadAll(r)
+	s, err := io.ReadAll(r)
 	if err != nil {
 		return "", err
 	}
@@ -350,7 +347,7 @@ func getSessionValue(store *session.Session, key string) (string, error) {
 	return string(s), nil
 }
 
-func updateSessionValue(session *session.Session, key, value string) error {
+func updateSessionValue(sess *session.Session, key, value string) error {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	if _, err := gz.Write([]byte(value)); err != nil {
@@ -363,7 +360,7 @@ func updateSessionValue(session *session.Session, key, value string) error {
 		return err
 	}
 
-	session.Set(key, b.String())
+	sess.Set(key, b.String())
 
 	return nil
 }
