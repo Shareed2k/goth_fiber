@@ -1,15 +1,18 @@
-# Goth-Fiber: Multi-Provider Authentication for Go [![GoDoc](https://godoc.org/github.com/shareed2k/goth_fiber?status.svg)](https://godoc.org/github.com/shareed2k/goth_fiber)
+# Goth-Fiber: Multi-Provider Authentication for Go [![GoDoc](https://godoc.org/github.com/wakatara/goth_fiber?status.svg)](https://godoc.org/github.com/wakatara/goth_fiber)
 
-Is wrapper for [goth library](https://github.com/markbates/goth) to use with [fiber Framework](https://github.com/gofiber/fiber), provides a simple, clean, and idiomatic way to write authentication
-packages for Go web applications.
+A wrapper for [goth library](https://github.com/markbates/goth) to use with [Fiber Framework v3](https://github.com/gofiber/fiber), providing a simple, clean, and idiomatic way to write authentication packages for Go web applications.
 
-Unlike other similar packages, Goth, lets you write OAuth, OAuth2, or any other
-protocol providers, as long as they implement the `Provider` and `Session` interfaces.
+Unlike other similar packages, Goth lets you write OAuth, OAuth2, or any other protocol providers, as long as they implement the `Provider` and `Session` interfaces.
+
+## Requirements
+
+- Go 1.25 or higher
+- Fiber v3.0.0-beta.4 or higher
 
 ## Installation
 
-```text
-$ go get github.com/shareed2k/goth_fiber
+```bash
+go get github.com/wakatara/goth_fiber
 ```
 
 ## Supported Providers
@@ -34,7 +37,6 @@ $ go get github.com/shareed2k/goth_fiber
 - GitHub
 - Gitlab
 - Google
-- Google+ (deprecated)
 - Heroku
 - InfluxCloud
 - Instagram
@@ -71,50 +73,75 @@ $ go get github.com/shareed2k/goth_fiber
 - Yammer
 - Yandex
 
+## Quick Start
+
+```go
+package main
+
+import (
+    "log"
+    "os"
+
+    "github.com/gofiber/fiber/v3"
+    "github.com/markbates/goth"
+    "github.com/markbates/goth/providers/google"
+
+    "github.com/wakatara/goth_fiber"
+)
+
+func main() {
+    app := fiber.New()
+
+    goth.UseProviders(
+        google.New(os.Getenv("OAUTH_KEY"), os.Getenv("OAUTH_SECRET"), "http://127.0.0.1:8088/auth/callback/google"),
+    )
+
+    app.Get("/login/:provider", goth_fiber.BeginAuthHandler)
+    app.Get("/auth/callback/:provider", func(ctx fiber.Ctx) error {
+        user, err := goth_fiber.CompleteUserAuth(ctx)
+        if err != nil {
+            return ctx.Status(fiber.StatusInternalServerError).SendString(err.Error())
+        }
+        return ctx.SendString(user.Email)
+    })
+    app.Get("/logout", func(ctx fiber.Ctx) error {
+        if err := goth_fiber.Logout(ctx); err != nil {
+            return ctx.Status(fiber.StatusInternalServerError).SendString(err.Error())
+        }
+        return ctx.SendString("logged out")
+    })
+
+    log.Fatal(app.Listen(":8088"))
+}
+```
+
 ## Examples
 
-See the [examples](examples) folder for a working application that lets users authenticate
-through Twitter, Facebook, Google Plus etc.
+See the [examples](examples) folder for a working application that lets users authenticate through Google and other providers.
 
-To run the example either clone the source from GitHub
+To run the example:
 
-```text
-$ git clone git@github.com/shareed2k/goth_fiber.git
-```
-
-```text
-$ go get github.com/shareed2k/goth_fiber
-```
-
-```text
-$ cd goth_fiber/examples
-$ go get -v
-$ go build
-$ ./examples
+```bash
+git clone https://github.com/wakatara/goth_fiber.git
+cd goth_fiber/examples
+export OAUTH_KEY=your-google-client-id
+export OAUTH_SECRET=your-google-client-secret
+go run main.go
 ```
 
 Now open up your browser and go to [http://localhost:8088/login/google](http://localhost:8088/login/google) to see the example.
 
-To actually use the different providers, please make sure you set environment variables. Example given in the examples/main.go file
-
 ## Security Notes
 
-By default, goth_fiber uses a `Session` from the `gofiber/session` package to store session data.
+By default, goth_fiber uses a `Store` from the `gofiber/fiber/v3/middleware/session` package to store session data.
 
-As configured, goth will generate cookies with the following `session.Config`:
+As configured, goth_fiber will generate cookies with the following `session.Config`:
 
 ```go
-    session.Config{
-	    Expiration: 24 * time.Hour,
-	    Storage:    memory.New(),
-	    KeyLookup: "cookie:_gothic_session",
-	    CookieDomain: "",
-	    CookiePath: "",
-	    CookieSecure: false,
-	    CookieHTTPOnly: true,
-	    CookieSameSite: "Lax",
-	    KeyGenerator: utils.UUIDv4,
-	}
+session.Config{
+    Extractor:      extractors.FromCookie("_gothic_session"),
+    CookieHTTPOnly: true,
+}
 ```
 
 To tailor these fields for your application, you can override the `goth_fiber.SessionStore` variable at startup.
@@ -122,37 +149,56 @@ To tailor these fields for your application, you can override the `goth_fiber.Se
 The following snippet shows one way to do this:
 
 ```go
-    // optional config
-    config := session.Config{
-	    Expiration:     30 * time.Minutes,
-	    Storage:        sqlite3.New(), // From github.com/gofiber/storage/sqlite3
-	    KeyLookup:      "header:session_id",
-	    CookieDomain:   "google.com",
-	    CookiePath:     "/users",
-	    CookieSecure:   os.Getenv("ENVIRONMENT") == "production",
-	    CookieHTTPOnly: true, // Should always be enabled
-	    CookieSameSite: "Lax",
-	    KeyGenerator:   utils.UUIDv4,
-	}
+import (
+    "time"
+    "github.com/gofiber/fiber/v3/extractors"
+    "github.com/gofiber/fiber/v3/middleware/session"
+    "github.com/gofiber/storage/sqlite3"
+)
 
-    // create session handler
-    sessions := session.New(config)
-
-    goth_fiber.SessionStore = sessions
+// Custom session configuration
+goth_fiber.SessionStore = session.NewStore(session.Config{
+    Extractor:       extractors.FromCookie("my_session"),
+    Storage:         sqlite3.New(), // From github.com/gofiber/storage/sqlite3
+    IdleTimeout:     30 * time.Minute,
+    AbsoluteTimeout: 24 * time.Hour,
+    CookieDomain:    "example.com",
+    CookiePath:      "/",
+    CookieSecure:    true, // Enable for HTTPS
+    CookieHTTPOnly:  true, // Should always be enabled
+    CookieSameSite:  "Lax",
+})
 ```
+
+## Migration from Fiber v2
+
+If you're migrating from the original goth_fiber (Fiber v2), note these key changes:
+
+1. **Handler signatures**: `*fiber.Ctx` is now `fiber.Ctx` (interface, not pointer)
+2. **Session configuration**: `KeyLookup` is replaced with `Extractor` functions
+3. **Import path**: Use `github.com/wakatara/goth_fiber` for v3 support
 
 ## Issues
 
-Issues always stand a significantly better chance of getting fixed if they are accompanied by a
-pull request.
+Issues always stand a significantly better chance of getting fixed if they are accompanied by a pull request.
 
 ## Contributing
 
 Would I love to see more providers? Certainly! Would you love to contribute one? Hopefully, yes!
 
 1. Fork it
-2. Create your feature branch (git checkout -b my-new-feature)
+2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Write Tests!
-4. Commit your changes (git commit -am 'Add some feature')
-5. Push to the branch (git push origin my-new-feature)
+4. Commit your changes (`git commit -am 'Add some feature'`)
+5. Push to the branch (`git push origin my-new-feature`)
 6. Create new Pull Request
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Acknowledgments
+
+- Original [goth_fiber](https://github.com/Shareed2k/goth_fiber) by Shareed2k
+- [Goth](https://github.com/markbates/goth) by Mark Bates
+- [Fiber](https://github.com/gofiber/fiber) by the Fiber team
