@@ -336,9 +336,9 @@ func Test_GetAuthURL(t *testing.T) {
 	}
 }
 
-func Test_SessionStoreNotNil(t *testing.T) {
-	if SessionStore == nil {
-		t.Error("SessionStore should be initialized in init()")
+func Test_SessionManagerNotNil(t *testing.T) {
+	if SessionManager == nil {
+		t.Error("SessionManager should be initialized in init()")
 	}
 }
 
@@ -541,18 +541,17 @@ func Test_MultipleSessionValues(t *testing.T) {
 }
 
 func Test_CustomSessionStore(t *testing.T) {
-	// Save original store
-	originalStore := SessionStore
+	// Save original manager
+	originalManager := SessionManager
 	defer func() {
-		SessionStore = originalStore
+		SessionManager = originalManager
 	}()
 
 	// Create custom store with different config
-	customStore := session.NewStore(session.Config{
+	SessionManager = NewSessionManager(session.NewStore(session.Config{
 		CookieHTTPOnly: true,
 		CookieSecure:   true,
-	})
-	SessionStore = customStore
+	}))
 
 	app := fiber.New()
 	app.Get("/test", func(c fiber.Ctx) error {
