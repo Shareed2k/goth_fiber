@@ -22,8 +22,8 @@ const ProviderParamKey key = iota
 
 // Session can/should be set by applications using gothic. The default is a cookie store.
 var (
-	SessionStore  *session.Store
-	ErrSessionNil = errors.New("goth/gothic: no SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store")
+	SessionManager *sessionManager
+	ErrSessionNil  = errors.New("goth/gothic: no SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store")
 )
 
 type key int
@@ -35,7 +35,7 @@ func init() {
 		CookieHTTPOnly: true,
 	}
 
-	SessionStore = session.NewStore(config)
+	SessionManager = NewSessionManager(session.NewStore(config))
 }
 
 /*
@@ -98,7 +98,7 @@ I would recommend using the BeginAuthHandler instead of doing all of these steps
 yourself, but that's entirely up to you.
 */
 func GetAuthURL(ctx fiber.Ctx) (string, error) {
-	if SessionStore == nil {
+	if SessionManager == nil {
 		return "", ErrSessionNil
 	}
 
@@ -152,7 +152,7 @@ first will be ignored.
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
 func CompleteUserAuth(ctx fiber.Ctx, options ...CompleteUserAuthOptions) (goth.User, error) {
-	if SessionStore == nil {
+	if SessionManager == nil {
 		return goth.User{}, ErrSessionNil
 	}
 
@@ -203,13 +203,11 @@ func CompleteUserAuth(ctx fiber.Ctx, options ...CompleteUserAuthOptions) (goth.U
 	}
 
 	err = StoreInSession(providerName, sess.Marshal(), ctx)
-
 	if err != nil {
 		return goth.User{}, err
 	}
 
-	gu, err := provider.FetchUser(sess)
-	return gu, err
+	return provider.FetchUser(sess)
 }
 
 // validateState ensures that the state token param from the original
@@ -234,18 +232,7 @@ func validateState(ctx fiber.Ctx, sess goth.Session) error {
 
 // Logout invalidates a user session.
 func Logout(ctx fiber.Ctx) error {
-	session, err := SessionStore.Get(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer session.Release()
-
-	if err := session.Destroy(); err != nil {
-		return err
-	}
-
-	return session.Save()
+	return SessionManager.delSession(ctx)
 }
 
 // GetProviderName is a function used to get the name of a provider
@@ -276,17 +263,10 @@ func GetProviderName(ctx fiber.Ctx) (string, error) {
 
 	// As a fallback, loop over the used providers, if we already have a valid session for any provider (ie. user has already begun authentication with a provider), then return that provider name
 	providers := goth.GetProviders()
-	session, err := SessionStore.Get(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	defer session.Release()
-
 	for _, provider := range providers {
 		p := provider.Name()
-		value := session.Get(p)
-		if _, ok := value.(string); ok {
+		_, err := SessionManager.getValue(ctx, p)
+		if err == nil {
 			return p, nil
 		}
 	}
@@ -303,45 +283,27 @@ func GetContextWithProvider(ctx fiber.Ctx, provider string) fiber.Ctx {
 
 // StoreInSession stores a specified key/value pair in the session.
 func StoreInSession(key string, value string, ctx fiber.Ctx) error {
-	session, err := SessionStore.Get(ctx)
+	val, err := compressValue(key, value)
 	if err != nil {
 		return err
 	}
 
-	defer session.Release()
-
-	if err := updateSessionValue(session, key, value); err != nil {
-		return err
-	}
-
-	return session.Save()
+	return SessionManager.setValue(ctx, key, val)
 }
 
 // GetFromSession retrieves a previously-stored value from the session.
 // If no value has previously been stored at the specified key, it will return an error.
 func GetFromSession(key string, ctx fiber.Ctx) (string, error) {
-	session, err := SessionStore.Get(ctx)
+	value, err := SessionManager.getValue(ctx, key)
 	if err != nil {
 		return "", err
 	}
 
-	defer session.Release()
-
-	value, err := getSessionValue(session, key)
-	if err != nil {
-		return "", errors.New("could not find a matching session for this request")
-	}
-
-	return value, nil
+	return decompressValue(value)
 }
 
-func getSessionValue(store *session.Session, key string) (string, error) {
-	value := store.Get(key)
-	if value == nil {
-		return "", errors.New("could not find a matching session for this request")
-	}
-
-	rdata := strings.NewReader(value.(string))
+func decompressValue(value string) (string, error) {
+	rdata := strings.NewReader(value)
 	r, err := gzip.NewReader(rdata)
 	if err != nil {
 		return "", err
@@ -354,20 +316,18 @@ func getSessionValue(store *session.Session, key string) (string, error) {
 	return string(s), nil
 }
 
-func updateSessionValue(session *session.Session, key, value string) error {
+func compressValue(key, value string) (string, error) {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	if _, err := gz.Write([]byte(value)); err != nil {
-		return err
+		return "", err
 	}
 	if err := gz.Flush(); err != nil {
-		return err
+		return "", err
 	}
 	if err := gz.Close(); err != nil {
-		return err
+		return "", err
 	}
 
-	session.Set(key, b.String())
-
-	return nil
+	return b.String(), nil
 }
