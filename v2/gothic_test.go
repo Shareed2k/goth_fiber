@@ -151,8 +151,6 @@ func Test_GetContextWithProvider(t *testing.T) {
 }
 
 func Test_BeginAuthHandler(t *testing.T) {
-	t.Parallel()
-
 	// Setup faux provider
 	goth.ClearProviders()
 	goth.UseProviders(&faux.Provider{})
@@ -178,8 +176,6 @@ func Test_BeginAuthHandler(t *testing.T) {
 }
 
 func Test_BeginAuthHandler_InvalidProvider(t *testing.T) {
-	t.Parallel()
-
 	goth.ClearProviders()
 
 	app := fiber.New()
@@ -304,8 +300,6 @@ func Test_GetFromSession_NotFound(t *testing.T) {
 }
 
 func Test_GetAuthURL(t *testing.T) {
-	t.Parallel()
-
 	// Setup faux provider
 	goth.ClearProviders()
 	goth.UseProviders(&faux.Provider{})
@@ -355,8 +349,6 @@ func Test_CompleteUserAuthOptions(t *testing.T) {
 }
 
 func Test_CompleteUserAuth_WithFauxProvider(t *testing.T) {
-	t.Parallel()
-
 	// Setup faux provider
 	goth.ClearProviders()
 	goth.UseProviders(&faux.Provider{})

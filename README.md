@@ -8,8 +8,19 @@ protocol providers, as long as they implement the `Provider` and `Session` inter
 
 ## Installation
 
+This repo publishes two modules:
+
+- `github.com/shareed2k/goth_fiber` (Fiber v2)
+- `github.com/shareed2k/goth_fiber/v2` (Fiber v3)
+
+Install the module that matches your Fiber version:
+
 ```text
 $ go get github.com/shareed2k/goth_fiber
+```
+
+```text
+$ go get github.com/shareed2k/goth_fiber/v2
 ```
 
 ## Supported Providers
@@ -73,8 +84,8 @@ $ go get github.com/shareed2k/goth_fiber
 
 ## Examples
 
-See the [examples](examples) folder for a working application that lets users authenticate
-through Twitter, Facebook, Google Plus etc.
+See the [examples](examples) folder for a Fiber v2 example, and the [v2/examples](v2/examples)
+folder for a Fiber v3 example.
 
 To run the example either clone the source from GitHub
 
@@ -117,7 +128,8 @@ As configured, goth will generate cookies with the following `session.Config`:
 	}
 ```
 
-To tailor these fields for your application, you can override the `goth_fiber.SessionStore` variable at startup.
+To tailor these fields for your application, you can override the session handler at startup.
+In v1 (Fiber v2), set `goth_fiber.SessionStore`. In v2 (Fiber v3), set `goth_fiber.SessionManager`.
 
 The following snippet shows one way to do this:
 

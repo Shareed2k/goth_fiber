@@ -31,11 +31,11 @@ func main() {
 	)
 
 	sessConfig := session.Config{
-		CookieSecure:    true,             // HTTPS only
-		CookieHTTPOnly:  true,             // Prevent XSS
-		CookieSameSite:  "Lax",            // CSRF protection
-		IdleTimeout:     30 * time.Minute, // Session timeout
-		AbsoluteTimeout: 24 * time.Hour,   // Maximum session life
+		CookieSecure:    os.Getenv("ENVIRONMENT") == "production", // HTTPS only
+		CookieHTTPOnly:  true,                                     // Prevent XSS
+		CookieSameSite:  "Lax",                                    // CSRF protection
+		IdleTimeout:     30 * time.Minute,                         // Session timeout
+		AbsoluteTimeout: 24 * time.Hour,                           // Maximum session life
 		Extractor:       extractors.FromCookie("__xyz_session"),
 	}
 
@@ -48,14 +48,16 @@ func main() {
 	app.Get("/auth/callback/:provider", func(ctx fiber.Ctx) error {
 		user, err := goth_fiber.CompleteUserAuth(ctx)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("auth callback error: %v", err)
+			return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 		}
 
 		return ctx.SendString(user.Email)
 	})
 	app.Get("/logout", func(ctx fiber.Ctx) error {
 		if err := goth_fiber.Logout(ctx); err != nil {
-			log.Fatal(err)
+			log.Printf("logout error: %v", err)
+			return ctx.Status(fiber.StatusInternalServerError).SendString(err.Error())
 		}
 
 		return ctx.SendString("logout")
