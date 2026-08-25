@@ -6,6 +6,24 @@ updates:
     interval: daily
   pull-request-branch-name:
     separator: "-"
-  open-pull-requests-limit: 3
+  open-pull-requests-limit: 10
+  assignees:
+  - Shareed2k
+- package-ecosystem: gomod
+  directory: "/v2"
+  schedule:
+    interval: daily
+  pull-request-branch-name:
+    separator: "-"
+  open-pull-requests-limit: 10
+  assignees:
+  - Shareed2k
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: weekly
+  pull-request-branch-name:
+    separator: "-"
+  open-pull-requests-limit: 5
   assignees:
   - Shareed2k
