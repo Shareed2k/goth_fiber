@@ -19,6 +19,9 @@ on:
     branches: [ master ]
   schedule:
     - cron: '23 3 * * 2'
+  # Lets the scan be re-run by hand. GitHub disables scheduled workflows in
+  # repositories that go quiet, which is what silenced this one.
+  workflow_dispatch:
 
 jobs:
   analyze:
