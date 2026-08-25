@@ -267,7 +267,14 @@ func GetProviderName(ctx *fiber.Ctx) (string, error) {
 		return p, nil
 	}
 
-	// try to get it from the Fasthttp context's value of providerContextKey key
+	// try to get it from the Fiber context's Locals, which is where
+	// GetContextWithProvider puts it
+	if p, ok := ctx.Locals(ProviderParamKey).(string); ok && p != "" {
+		return p, nil
+	}
+
+	// Deprecated: GetContextWithProvider used to write this as a header.
+	// Kept so anyone setting it by hand keeps working.
 	if p := ctx.Get(fmt.Sprint(ProviderParamKey), ""); p != "" {
 		return p, nil
 	}
@@ -294,7 +301,10 @@ func GetProviderName(ctx *fiber.Ctx) (string, error) {
 
 // GetContextWithProvider returns a new request context containing the provider
 func GetContextWithProvider(ctx *fiber.Ctx, provider string) *fiber.Ctx {
-	ctx.Set(fmt.Sprint(ProviderParamKey), provider)
+	// This used ctx.Set, which writes a *response* header, while
+	// GetProviderName reads *request* headers with ctx.Get. The two could
+	// never meet, so the provider set here was silently ignored.
+	ctx.Locals(ProviderParamKey, provider)
 	return ctx
 }
 
