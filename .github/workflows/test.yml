@@ -11,22 +11,32 @@ permissions:
 
 jobs:
   test:
-    name: Test (${{ matrix.module }})
+    name: Test (${{ matrix.module }}, go ${{ matrix.go }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         # Both modules published from this repo.
         module: [ '.', './v2' ]
+        # "minimum" is the go directive in that module's go.mod, which is the
+        # version we promise to support. "stable" is whatever Go ships today.
+        # Testing only the minimum hides breakage on current Go; testing only
+        # stable lets us quietly start depending on something newer than we
+        # claim to need.
+        go: [ 'minimum', 'stable' ]
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v7
       with:
-        go-version-file: ${{ matrix.module }}/go.mod
+        go-version-file: ${{ matrix.go == 'minimum' && format('{0}/go.mod', matrix.module) || '' }}
+        go-version: ${{ matrix.go == 'stable' && 'stable' || '' }}
+
+    - name: Report Go version
+      run: go version
 
     - name: Build
       working-directory: ${{ matrix.module }}
