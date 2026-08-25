@@ -11,15 +11,17 @@ type sessionManager struct {
 	session *session.Store
 }
 
+// NewSessionManager wraps a Fiber session store for use by this package.
+//
+// s must not be nil. There is no default to fall back to here, so a nil store
+// would only surface as a nil pointer dereference on the first request that
+// touches the session.
 func NewSessionManager(s *session.Store) *sessionManager {
-	// Create new storage handler
-	sessionManager := new(sessionManager)
-	if s != nil {
-		// Use provided storage if provided
-		sessionManager.session = s
+	if s == nil {
+		panic("goth_fiber: NewSessionManager requires a non-nil *session.Store")
 	}
 
-	return sessionManager
+	return &sessionManager{session: s}
 }
 
 // get value from session

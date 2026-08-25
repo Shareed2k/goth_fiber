@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"strings"
 
@@ -310,9 +309,7 @@ func StoreInSession(key string, value string, ctx *fiber.Ctx) error {
 		return err
 	}
 
-	// saved here
-	session.Save()
-	return nil
+	return session.Save()
 }
 
 // GetFromSession retrieves a previously-stored value from the session.
@@ -323,28 +320,29 @@ func GetFromSession(key string, ctx *fiber.Ctx) (string, error) {
 		return "", err
 	}
 
-	value, err := getSessionValue(session, key)
-	if err != nil {
-		return "", errors.New("could not find a matching session for this request")
-	}
-
-	return value, nil
+	return getSessionValue(session, key)
 }
 
 func getSessionValue(store *session.Session, key string) (string, error) {
 	value := store.Get(key)
 	if value == nil {
-		return "", errors.New("could not find a matching session for this request")
+		return "", fmt.Errorf("could not find a matching session for this request: no value stored for %q", key)
 	}
 
-	rdata := strings.NewReader(value.(string))
-	r, err := gzip.NewReader(rdata)
-	if err != nil {
-		return "", err
+	raw, ok := value.(string)
+	if !ok {
+		return "", fmt.Errorf("could not find a matching session for this request: value stored for %q is %T, not a string", key, value)
 	}
-	s, err := ioutil.ReadAll(r)
+
+	r, err := gzip.NewReader(strings.NewReader(raw))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not decompress session value for %q: %w", key, err)
+	}
+	defer r.Close()
+
+	s, err := io.ReadAll(r)
+	if err != nil {
+		return "", fmt.Errorf("could not read session value for %q: %w", key, err)
 	}
 
 	return string(s), nil

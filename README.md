@@ -153,6 +153,37 @@ The following snippet shows one way to do this:
     goth_fiber.SessionStore = sessions
 ```
 
+Note that the session lookup applies to the OAuth callback too. If you point it
+at a header (`KeyLookup: "header:session_id"` above), the browser will not send
+that header when the provider redirects back, and `CompleteUserAuth` will fail
+with `could not find a matching session for this request`. Use a cookie lookup
+unless your callback route is genuinely driven by your own client code.
+
+## Completing the auth flow
+
+`CompleteUserAuth` **ends the goth session as soon as it returns**. That is the
+default, and it is why the response to your callback carries an already-expired
+`_gothic_session` cookie: the session it was tracking has served its purpose and
+is destroyed.
+
+If you want to keep the session alive after the callback (for example because
+you read from it again later in the same request), pass the option explicitly:
+
+```go
+app.Get("/auth/callback/:provider", func(ctx *fiber.Ctx) error {
+    user, err := goth_fiber.CompleteUserAuth(ctx, goth_fiber.CompleteUserAuthOptions{
+        ShouldLogout: false,
+    })
+    if err != nil {
+        return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
+    }
+
+    return ctx.JSON(user)
+})
+```
+
+Only the first `CompleteUserAuthOptions` value is read; any extras are ignored.
+
 ## Issues
 
 Issues always stand a significantly better chance of getting fixed if they are accompanied by a

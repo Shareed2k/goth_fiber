@@ -1,0 +1,41 @@
+name: Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both modules published from this repo.
+        module: [ '.', './v2' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: ${{ matrix.module }}/go.mod
+
+    - name: Build
+      working-directory: ${{ matrix.module }}
+      run: go build ./...
+
+    - name: Vet
+      working-directory: ${{ matrix.module }}
+      run: go vet ./...
+
+    - name: Test
+      working-directory: ${{ matrix.module }}
+      run: go test -race ./...

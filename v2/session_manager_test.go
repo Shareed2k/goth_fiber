@@ -3,6 +3,7 @@ package goth_fiber
 import (
 	"io"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v3"
@@ -95,4 +96,21 @@ func Test_SessionManager_SetGetDel(t *testing.T) {
 		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("expected non-200 after delete, got 200 with body: %s", string(body))
 	}
+}
+
+func Test_NewSessionManager_NilStore(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("expected NewSessionManager(nil) to panic, it returned normally")
+		}
+		msg, ok := r.(string)
+		if !ok || !strings.Contains(msg, "non-nil *session.Store") {
+			t.Fatalf("unexpected panic value: %#v", r)
+		}
+	}()
+
+	NewSessionManager(nil)
 }
